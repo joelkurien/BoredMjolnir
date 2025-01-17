@@ -3,6 +3,7 @@ package main
 import (
 	_ "image/png"
 	"log"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -37,11 +38,18 @@ type Game struct {
 	angle     float64
 	useHammer bool
 	hammer    *Hammer
+	ball      *Ball
 }
 
 // Handles error situation
 func (g *Game) Update() error {
 	g.HammerSwings()
+	if !g.hammer.drag && g.angle == 0 {
+		g.hammer.posFixed = false
+		time.Sleep(250 * time.Millisecond)
+		g.useHammer = false
+	}
+	g.BallCollide()
 	return nil
 }
 
@@ -52,6 +60,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.useHammer {
 		screen.DrawImage(hammerImage, hop)
 	}
+
+	bop := &ebiten.DrawImageOptions{}
+	bop.GeoM.Scale(0.02, 0.02)
+	g.ball.pivotX = float64(screen.Bounds().Dx()) / 2
+	g.ball.pivotY = float64(screen.Bounds().Dy()) / 2
+	bop.GeoM.Translate(g.ball.pivotX, g.ball.pivotY)
+	screen.DrawImage(ballImage, bop)
 	//screen.DrawImage(ballImage, bop)
 }
 
@@ -70,6 +85,7 @@ func main() {
 		useHammer: false,
 	}
 	game.hammer = Mjolnir()
+	game.ball = Tesseract()
 
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)

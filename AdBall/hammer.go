@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -13,6 +14,7 @@ type Hammer struct {
 	posFixed bool
 	drag     bool
 	angVel   float64
+	trueVel  float64
 }
 
 func Mjolnir() *Hammer {
@@ -20,6 +22,8 @@ func Mjolnir() *Hammer {
 		pivotX:   0,
 		pivotY:   0,
 		posFixed: false,
+		trueVel:  0,
+		angVel:   0,
 	}
 }
 
@@ -55,6 +59,7 @@ func (g *Game) HammerSwings() {
 			dx := cx1 - g.hammer.pivotX
 			dy := cy1 - g.hammer.pivotY
 			g.angle = math.Atan2(dy, dx)
+			g.hammer.trueVel += 1
 			g.hammer.angVel = 0
 		}
 	}
@@ -69,9 +74,18 @@ func (g *Game) HammerSwings() {
 			g.angle = 0
 		}
 	}
-	if !g.hammer.drag && g.angle == 0 {
-		g.hammer.posFixed = false
-		time.Sleep(250 * time.Millisecond)
-		g.useHammer = false
+}
+
+func (g *Game) BallCollide() {
+	if g.ball.pivotX <= g.hammer.pivotX+float64(hammerImage.Bounds().Dx()) &&
+		!g.hammer.drag && g.angle > -0.1 && g.angle < 0.1 && g.hammer.posFixed {
+		g.ball.velocity = g.hammer.trueVel
+	}
+	for g.ball.velocity != 0 {
+		g.ball.velocity -= 1
+		time.Sleep(100 * time.Millisecond)
+		if g.ball.velocity != 0 {
+			fmt.Print("\n", g.ball.velocity)
+		}
 	}
 }
